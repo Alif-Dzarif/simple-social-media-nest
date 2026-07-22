@@ -3,6 +3,7 @@ import { Comment } from '../../comments/entities/comment.entity';
 import { Post } from '../../posts/entities/post.entity';
 import { Follow } from '../../follows/entities/follow.entity';
 import { Like } from '../../likes/entities/like.entity';
+import { Exclude } from 'class-transformer';
 
 @Entity({ name: 'users', })
 export class User {
@@ -15,7 +16,8 @@ export class User {
   @Column({ unique: true })
   email!: string;
 
-  @Column()
+  @Column({ select: false })
+  @Exclude()
   password!: string;
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
