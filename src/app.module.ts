@@ -10,6 +10,7 @@ import { ConfigModule } from '@nestjs/config/dist/config.module';
 import { TypeOrmModule } from '@nestjs/typeorm/dist/typeorm.module';
 import { ConfigService } from '@nestjs/config/dist/config.service';
 import { join } from 'path';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -32,7 +33,8 @@ import { join } from 'path';
     PostsModule,
     LikesModule,
     CommentsModule,
-    FollowsModule
+    FollowsModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

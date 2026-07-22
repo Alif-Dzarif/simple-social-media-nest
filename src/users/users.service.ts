@@ -47,6 +47,19 @@ export class UsersService {
     return user;
   }
 
+  async findOneByUsername(username: string) {
+    const user = await this.userRepo.createQueryBuilder('user')
+      .addSelect('user.password')
+      .where('user.username = :username', { username })
+      .getOne();
+
+    if (!user) throw new NotFoundException({
+      message: "user not exist"
+    })
+
+    return user;
+  }
+
   async update(id: string, updateUserDto: UpdateUserDto) {
     const { password } = updateUserDto
     const user = await this.userRepo.findOneBy({ id })
