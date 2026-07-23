@@ -11,6 +11,7 @@ import { TypeOrmModule } from '@nestjs/typeorm/dist/typeorm.module';
 import { ConfigService } from '@nestjs/config/dist/config.service';
 import { join } from 'path';
 import { AuthModule } from './auth/auth.module';
+import { MinioService } from './minio/minio.service';
 
 @Module({
   imports: [
@@ -39,6 +40,6 @@ import { AuthModule } from './auth/auth.module';
     AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, MinioService],
 })
 export class AppModule { }
