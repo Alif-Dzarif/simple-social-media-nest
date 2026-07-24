@@ -12,6 +12,9 @@ import { ConfigService } from '@nestjs/config/dist/config.service';
 import { join } from 'path';
 import { AuthModule } from './auth/auth.module';
 import { MinioService } from './minio/minio.service';
+import { VideoValidatorService } from './media/video-validator/video-validator.service';
+import { VideoValidatorModule } from './media/video-validator/video-validator.module';
+import { MinioModule } from './minio/minio.module';
 
 @Module({
   imports: [
@@ -38,8 +41,10 @@ import { MinioService } from './minio/minio.service';
     CommentsModule,
     FollowsModule,
     AuthModule,
+    VideoValidatorModule,
+    MinioModule,
   ],
   controllers: [AppController],
-  providers: [AppService, MinioService],
+  providers: [AppService, MinioService, VideoValidatorService],
 })
 export class AppModule { }

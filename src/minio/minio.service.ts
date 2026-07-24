@@ -1,22 +1,13 @@
+// minio/minio.service.ts
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
-import { Client } from 'minio'
-
-const ALLOWED_TYPES = {
-  image: ['image/jpeg', 'image/png', 'image/webp'],
-  video: ['video/mp4', 'video/webm', 'video/quicktime'], // .mov = quicktime
-};
-
-const SIZE_LIMITS = {
-  image: 10 * 1024 * 1024,      // 5MB
-  video: 100 * 1024 * 1024,    // 100MB
-};
+import { Client } from 'minio';
+import { ALLOWED_TYPES, SIZE_LIMITS } from '../common/constants/media.constant';
 
 @Injectable()
 export class MinioService {
-  private client: Client
-  private bucket = process.env.MINIO_BUCKET || 'post-media'
+  private client: Client;
+  private bucket = process.env.MINIO_BUCKET || 'post-media';
 
   constructor() {
     this.client = new Client({
@@ -25,22 +16,48 @@ export class MinioService {
       useSSL: process.env.MINIO_USE_SSL === 'true',
       accessKey: process.env.MINIO_ACCESS_KEY!,
       secretKey: process.env.MINIO_SECRET_KEY!,
-    })
+    });
   }
 
   private detectMediaType(contentType: string): 'image' | 'video' {
-    if (ALLOWED_TYPES.image.includes(contentType)) return 'image'
-    if (ALLOWED_TYPES.video.includes(contentType)) return 'video'
-    throw new BadRequestException('Unsupported file type')
+    if (ALLOWED_TYPES.image.includes(contentType)) return 'image';
+    if (ALLOWED_TYPES.video.includes(contentType)) return 'video';
+    throw new BadRequestException('Unsupported file type');
   }
 
+  // for server-side upload (you already have the buffer via Multer)
+  async uploadBuffer(
+    userId: string,
+    originalname: string,
+    buffer: Buffer,
+    contentType: string,
+  ) {
+    const mediaType = this.detectMediaType(contentType);
+
+    if (buffer.length > SIZE_LIMITS[mediaType]) {
+      throw new BadRequestException(
+        `${mediaType} exceeds max size of ${SIZE_LIMITS[mediaType] / 1024 / 1024}MB`,
+      );
+    }
+
+    const ext = originalname.split('.').pop();
+    const objectKey = `posts/${mediaType}s/${userId}/${randomUUID()}.${ext}`;
+
+    await this.client.putObject(this.bucket, objectKey, buffer, buffer.length, {
+      'Content-Type': contentType,
+    });
+
+    return { objectKey, mediaType };
+  }
+
+  // keep this for the presigned-URL flow, if you use it elsewhere (e.g. direct client upload)
   async getPresignedUploadUrl(
     userId: string,
     filename: string,
     contentType: string,
-    declaredSize?: number
+    declaredSize?: number,
   ) {
-    const mediaType = this.detectMediaType(contentType)
+    const mediaType = this.detectMediaType(contentType);
 
     if (declaredSize && declaredSize > SIZE_LIMITS[mediaType]) {
       throw new BadRequestException(
@@ -48,23 +65,20 @@ export class MinioService {
       );
     }
 
-    const ext = filename.split('.').pop()
-    const objectKey = `posts/${mediaType}s/${userId}/${randomUUID()}.${ext}`
+    const ext = filename.split('.').pop();
+    const objectKey = `posts/${mediaType}s/${userId}/${randomUUID()}.${ext}`;
 
-    const uploadUrl = await this.client.presignedGetObject(this.bucket, objectKey, 600)
+    // was presignedGetObject — bug, should be presignedPutObject for uploads
+    const uploadUrl = await this.client.presignedPutObject(this.bucket, objectKey, 600);
 
-    return { uploadUrl, objectKey, mediaType }
+    return { uploadUrl, objectKey, mediaType };
   }
 
-  async getPresignedViewUrl(
-    objectKey: string
-  ) {
-    return this.client.presignedGetObject(this.bucket, objectKey, 3600)
+  async getPresignedViewUrl(objectKey: string) {
+    return this.client.presignedGetObject(this.bucket, objectKey, 3600);
   }
 
-  async deleteObject(
-    objectKey: string
-  ) {
-    this.client.removeObject(this.bucket, objectKey)
+  async deleteObject(objectKey: string) {
+    await this.client.removeObject(this.bucket, objectKey); // was missing `await`
   }
 }

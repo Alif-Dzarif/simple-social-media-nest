@@ -11,11 +11,14 @@ export class Post {
   @Column({ type: 'uuid' })
   user_id!: string;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: 'text' })
   caption!: string;
 
-  @Column({ type: 'text', nullable: true })
-  image_url!: string;
+  @Column({ type: 'text' })
+  mediaKey!: string;
+
+  @Column({ type: 'text' })
+  mediaType!: string
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at!: Date;

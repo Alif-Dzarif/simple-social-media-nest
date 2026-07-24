@@ -1,19 +1,31 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('posts')
 export class PostsController {
-  constructor(private readonly postsService: PostsService) {}
+  constructor(
+    private readonly postsService: PostsService,
 
+  ) { }
+
+  @UseGuards(AuthGuard('jwt'))
   @Post()
-  create(@Body() createPostDto: CreatePostDto) {
-    return this.postsService.create(createPostDto);
+  @UseInterceptors(FileInterceptor('media'))
+  create(@Body() createPostDto: CreatePostDto, @UploadedFile() file: Express.Multer.File) {
+    return this.postsService.create(createPostDto, file);
   }
 
   @Get()
   findAll() {
+    return this.postsService.findAll();
+  }
+
+  @Get("random")
+  getRandom() {
     return this.postsService.findAll();
   }
 
