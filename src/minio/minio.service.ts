@@ -41,7 +41,7 @@ export class MinioService {
     }
 
     const ext = originalname.split('.').pop();
-    const objectKey = `posts/${mediaType}s/${userId}/${randomUUID()}.${ext}`;
+    const objectKey = `${mediaType}s/${userId}/${randomUUID()}.${ext}`;
 
     await this.client.putObject(this.bucket, objectKey, buffer, buffer.length, {
       'Content-Type': contentType,
@@ -66,7 +66,7 @@ export class MinioService {
     }
 
     const ext = filename.split('.').pop();
-    const objectKey = `posts/${mediaType}s/${userId}/${randomUUID()}.${ext}`;
+    const objectKey = `${mediaType}s/${userId}/${randomUUID()}.${ext}`;
 
     // was presignedGetObject — bug, should be presignedPutObject for uploads
     const uploadUrl = await this.client.presignedPutObject(this.bucket, objectKey, 600);

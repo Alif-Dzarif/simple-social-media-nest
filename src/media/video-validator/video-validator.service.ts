@@ -1,5 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import ffmpeg from 'fluent-ffmpeg'
+import ffprobeInstaller from '@ffprobe-installer/ffprobe'
+
+ffmpeg.setFfprobePath(ffprobeInstaller.path);
 
 @Injectable()
 export class VideoValidatorService {
@@ -9,6 +12,7 @@ export class VideoValidatorService {
     return new Promise((resolve, reject) => {
       ffmpeg.ffprobe(sourceUrl, (err, metadata) => {
         if (err) {
+          console.error('ffprobe failed:', err.message);
           return reject(new BadRequestException('Could not read video metadata'));
         }
 

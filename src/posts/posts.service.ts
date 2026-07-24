@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { MinioService } from '../minio/minio.service';
@@ -19,53 +19,37 @@ export class PostsService {
   ) { }
 
   async create(createPostDto: CreatePostDto, file: Express.Multer.File) {
-    let mediaKey: string | undefined
-    let mediaType: 'image' | 'video' | undefined
+    let mediaKey: string | undefined;
+    let mediaType: 'image' | 'video' | undefined;
+    let mediaUrl: string | undefined
 
     if (file) {
-      mediaType = file.mimetype.startsWith('video/') ? 'video' : 'image'
-      const allowed = mediaType === 'image' ? ALLOWED_TYPES['image'] : ALLOWED_TYPES['video']
-
-      if (!allowed.includes(file.mimetype)) {
-        throw new BadRequestException(`Unsupported ${mediaType} type`);
-      }
-
-      const ext = file.originalname.split('.').pop()
-      mediaKey = `posts/${mediaType}s/${createPostDto.user_id}/${randomUUID()}.${ext}`
-
       const result = await this.minioService.uploadBuffer(
         createPostDto.user_id,
         file.originalname,
         file.buffer,
         file.mimetype,
       );
+      mediaKey = result.objectKey;
+      mediaType = result.mediaType;
+      mediaUrl = await this.minioService.getPresignedViewUrl(mediaKey);
 
-      mediaKey = result.objectKey,
-        mediaType = result.mediaType
-
-      if (mediaType === 'video') {
-        const viewUrl = await this.minioService.getPresignedViewUrl(mediaKey)
-
-        try {
-          await this.videoValidator.validateDuration(viewUrl)
-        } catch (error) {
-          await this.minioService.deleteObject(mediaKey)
-          throw error
+      try {
+        if (mediaType === 'video') {
+          await this.videoValidator.validateDuration(mediaUrl);
         }
 
-        const post = this.postRepo.create({
-          ...createPostDto,
-          mediaKey: mediaKey,
-          mediaType: mediaType
-        })
-
-        return await this.postRepo.save(post)
+        const post = this.postRepo.create({ ...createPostDto, mediaKey, mediaType, mediaUrl });
+        return await this.postRepo.save(post);
+      } catch (error) {
+        await this.minioService.deleteObject(mediaKey);
+        throw error;
       }
     }
   }
 
   async findAll() {
-    return `This action returns all posts`;
+    return this.postRepo.find()
   }
 
   async findOne(id: number) {

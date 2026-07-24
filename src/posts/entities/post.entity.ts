@@ -18,6 +18,9 @@ export class Post {
   mediaKey!: string;
 
   @Column({ type: 'text' })
+  mediaUrl!: string;
+
+  @Column({ type: 'text' })
   mediaType!: string
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })

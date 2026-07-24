@@ -19,6 +19,7 @@ export class PostsController {
     return this.postsService.create(createPostDto, file);
   }
 
+  @UseGuards(AuthGuard('jwt'))
   @Get()
   findAll() {
     return this.postsService.findAll();
