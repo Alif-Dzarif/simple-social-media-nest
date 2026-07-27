@@ -50,7 +50,18 @@ export class PostsService {
   }
 
   async findAll() {
-    const posts = await this.postRepo.find();
+    const posts = await this.postRepo
+      .createQueryBuilder('post')
+      .leftJoinAndSelect('post.user', 'user')
+      .select([
+        'post.id',
+        'post.mediaKey',
+        'post.mediaType',
+        'post.caption',
+        'user.id',
+        'user.username',
+      ])
+      .getMany();
     return Promise.all(posts.map((post) => this.attachMediaUrl(post)));
   }
 
@@ -59,13 +70,34 @@ export class PostsService {
       .createQueryBuilder('post')
       .orderBy('RANDOM()') // MySQL: use 'RAND()' instead
       .limit(10) // however many you want to return
+      .leftJoinAndSelect('post.user', 'user')
+      .select([
+        'post.id',
+        'post.mediaKey',
+        'post.mediaType',
+        'post.caption',
+        'user.id',
+        'user.username',
+      ])
       .getMany();
 
     return Promise.all(posts.map((post) => this.attachMediaUrl(post)));
   }
 
   async findOne(id: string) {
-    const post = await this.postRepo.findOneBy({ id });
+    const post = await this.postRepo
+      .createQueryBuilder('post')
+      .where({ id })
+      .leftJoinAndSelect('post.user', 'user')
+      .select([
+        'post.id',
+        'post.mediaKey',
+        'post.mediaType',
+        'post.caption',
+        'user.id',
+        'user.username',
+      ])
+      .getOne()
     if (!post) throw new NotFoundException('Post not found');
     return this.attachMediaUrl(post);
   }
