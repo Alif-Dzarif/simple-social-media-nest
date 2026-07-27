@@ -75,7 +75,7 @@ export class MinioService {
   }
 
   async getPresignedViewUrl(objectKey: string) {
-    return this.client.presignedGetObject(this.bucket, objectKey, 3600);
+    return this.client.presignedGetObject(this.bucket, objectKey);
   }
 
   async deleteObject(objectKey: string) {

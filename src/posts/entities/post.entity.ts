@@ -18,10 +18,10 @@ export class Post {
   mediaKey!: string;
 
   @Column({ type: 'text' })
-  mediaUrl!: string;
-
-  @Column({ type: 'text' })
   mediaType!: string
+
+  @Column({ type: 'boolean', default: false })
+  hide!: boolean
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at!: Date;

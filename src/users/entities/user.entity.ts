@@ -20,6 +20,9 @@ export class User {
   @Exclude()
   password!: string;
 
+  @Column({ type: 'boolean', default: false })
+  is_private!: boolean
+
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at!: Date;
 

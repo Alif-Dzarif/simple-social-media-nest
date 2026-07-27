@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UploadedFile, UseGuards, UseInterceptors, Req } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
@@ -15,8 +15,8 @@ export class PostsController {
   @UseGuards(AuthGuard('jwt'))
   @Post()
   @UseInterceptors(FileInterceptor('media'))
-  create(@Body() createPostDto: CreatePostDto, @UploadedFile() file: Express.Multer.File) {
-    return this.postsService.create(createPostDto, file);
+  create(@Req() req: { user: { id: string, username: string } }, @Body() createPostDto: CreatePostDto, @UploadedFile() file: Express.Multer.File) {
+    return this.postsService.create(req.user.id, createPostDto, file);
   }
 
   @UseGuards(AuthGuard('jwt'))
@@ -32,16 +32,16 @@ export class PostsController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.postsService.findOne(+id);
+    return this.postsService.findOne(id);
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updatePostDto: UpdatePostDto) {
-    return this.postsService.update(+id, updatePostDto);
+    return this.postsService.update(id, updatePostDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.postsService.remove(+id);
+    return this.postsService.remove(id);
   }
 }
