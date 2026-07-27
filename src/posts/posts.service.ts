@@ -6,6 +6,8 @@ import { VideoValidatorService } from '../media/video-validator/video-validator.
 import { InjectRepository } from '@nestjs/typeorm';
 import { Post } from './entities/post.entity';
 import { Repository } from 'typeorm';
+import { Like } from '../likes/entities/like.entity';
+import { Comment } from '../comments/entities/comment.entity';
 
 @Injectable()
 export class PostsService {
@@ -50,7 +52,7 @@ export class PostsService {
   }
 
   async findAll() {
-    const posts = await this.postRepo
+    const { entities, raw } = await this.postRepo
       .createQueryBuilder('post')
       .leftJoinAndSelect('post.user', 'user')
       .select([
@@ -58,15 +60,40 @@ export class PostsService {
         'post.mediaKey',
         'post.mediaType',
         'post.caption',
+        'post.hide',
         'user.id',
         'user.username',
       ])
-      .getMany();
-    return Promise.all(posts.map((post) => this.attachMediaUrl(post)));
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('COUNT(comment.id)', 'count')
+          .from(Comment, 'comment')
+          .where('comment.post_id = post.id');
+      }, 'commentsCount')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('COUNT(like.id)', 'count')
+          .from(Like, 'like')
+          .where('like.post_id = post.id');
+      }, 'likesCount')
+      .getRawAndEntities();
+
+    return Promise.all(
+      entities.map(async (post: Post, i: number) => {
+        const withMedia = await this.attachMediaUrl(post);
+        return {
+          ...withMedia,
+          count: {
+            comment: parseInt(raw[i].commentsCount, 10) || 0,
+            like: parseInt(raw[i].likesCount, 10) || 0,
+          },
+        };
+      }),
+    );
   }
 
   async findRandom() {
-    const posts = await this.postRepo
+    const { entities, raw } = await this.postRepo
       .createQueryBuilder('post')
       .orderBy('RANDOM()') // MySQL: use 'RAND()' instead
       .limit(10) // however many you want to return
@@ -76,18 +103,41 @@ export class PostsService {
         'post.mediaKey',
         'post.mediaType',
         'post.caption',
+        'post.hide',
         'user.id',
         'user.username',
       ])
-      .getMany();
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('COUNT(comment.id)', 'count')
+          .from(Comment, 'comment')
+          .where('comment.post_id = post.id');
+      }, 'commentsCount')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('COUNT(like.id)', 'count')
+          .from(Like, 'like')
+          .where('like.post_id = post.id');
+      }, 'likesCount')
+      .getRawAndEntities();
 
-    return Promise.all(posts.map((post) => this.attachMediaUrl(post)));
+    return Promise.all(
+      entities.map(async (post: Post, i: number) => {
+        const withMedia = await this.attachMediaUrl(post);
+        return {
+          ...withMedia,
+          count: {
+            comment: parseInt(raw[i].commentsCount, 10) || 0,
+            like: parseInt(raw[i].likesCount, 10) || 0,
+          },
+        };
+      }),
+    );
   }
 
   async findOne(id: string) {
-    const post = await this.postRepo
+    const { entities, raw } = await this.postRepo
       .createQueryBuilder('post')
-      .where({ id })
       .leftJoinAndSelect('post.user', 'user')
       .select([
         'post.id',
@@ -97,9 +147,32 @@ export class PostsService {
         'user.id',
         'user.username',
       ])
-      .getOne()
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('COUNT(comment.id)', 'count')
+          .from(Comment, 'comment')
+          .where('comment.post_id = post.id');
+      }, 'commentsCount')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('COUNT(like.id)', 'count')
+          .from(Like, 'like')
+          .where('like.post_id = post.id');
+      }, 'likesCount')
+      .where('post.id = :id', { id })
+      .getRawAndEntities();
+
+    const post = entities[0];
     if (!post) throw new NotFoundException('Post not found');
-    return this.attachMediaUrl(post);
+
+    const withMedia = await this.attachMediaUrl(post);
+    return {
+      ...withMedia,
+      count: {
+        comment: parseInt(raw[0].commentsCount, 10) || 0,
+        like: parseInt(raw[0].likesCount, 10) || 0,
+      },
+    };
   }
 
   async update(id: string, updatePostDto: UpdatePostDto) {
