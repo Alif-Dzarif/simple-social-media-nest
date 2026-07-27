@@ -3,8 +3,6 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { MinioService } from '../minio/minio.service';
 import { VideoValidatorService } from '../media/video-validator/video-validator.service';
-import { ALLOWED_TYPES } from '../common/constants/media.constant';
-import { randomUUID } from 'crypto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Post } from './entities/post.entity';
 import { Repository } from 'typeorm';
@@ -31,7 +29,6 @@ export class PostsService {
     );
     const mediaKey = result.objectKey;
     const mediaType = result.mediaType;
-    const mediaUrl = await this.minioService.getPresignedViewUrl(mediaKey);
 
     try {
       if (mediaType === 'video') {
@@ -57,6 +54,16 @@ export class PostsService {
     return Promise.all(posts.map((post) => this.attachMediaUrl(post)));
   }
 
+  async findRandom() {
+    const posts = await this.postRepo
+      .createQueryBuilder('post')
+      .orderBy('RANDOM()') // MySQL: use 'RAND()' instead
+      .limit(10) // however many you want to return
+      .getMany();
+
+    return Promise.all(posts.map((post) => this.attachMediaUrl(post)));
+  }
+
   async findOne(id: string) {
     const post = await this.postRepo.findOneBy({ id });
     if (!post) throw new NotFoundException('Post not found');
@@ -64,7 +71,22 @@ export class PostsService {
   }
 
   async update(id: string, updatePostDto: UpdatePostDto) {
-    return `This action updates a #${id} post`;
+    const { hide } = updatePostDto
+    const post = await this.postRepo.findOneBy({ id })
+
+    const post_obj = updatePostDto
+
+    if (!post) throw new NotFoundException({
+      message: "Post not unavailable"
+    })
+
+    if (hide) {
+      post_obj.hide = hide
+    }
+
+    Object.assign(post, post_obj)
+
+    return await this.postRepo.save(post)
   }
 
   async remove(id: string) {

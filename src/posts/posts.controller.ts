@@ -27,7 +27,7 @@ export class PostsController {
 
   @Get("random")
   getRandom() {
-    return this.postsService.findAll();
+    return this.postsService.findRandom();
   }
 
   @Get(':id')
