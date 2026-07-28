@@ -4,6 +4,7 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { AuthData } from '../auth/dto/auth.dto';
 
 @Controller('posts')
 export class PostsController {
@@ -15,11 +16,10 @@ export class PostsController {
   @UseGuards(AuthGuard('jwt'))
   @Post()
   @UseInterceptors(FileInterceptor('media'))
-  create(@Req() req: { user: { id: string, username: string } }, @Body() createPostDto: CreatePostDto, @UploadedFile() file: Express.Multer.File) {
+  create(@Req() req: AuthData, @Body() createPostDto: CreatePostDto, @UploadedFile() file: Express.Multer.File) {
     return this.postsService.create(req.user.id, createPostDto, file);
   }
 
-  @UseGuards(AuthGuard('jwt'))
   @Get()
   findAll() {
     return this.postsService.findAll();
@@ -35,11 +35,13 @@ export class PostsController {
     return this.postsService.findOne(id);
   }
 
+  @UseGuards(AuthGuard('jwt'))
   @Patch(':id')
   update(@Param('id') id: string, @Body() updatePostDto: UpdatePostDto) {
     return this.postsService.update(id, updatePostDto);
   }
 
+  @UseGuards(AuthGuard('jwt'))
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.postsService.remove(id);

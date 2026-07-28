@@ -1,6 +1,5 @@
 import { IsNotEmpty, IsString } from "class-validator";
 
-
 export class AuthPayloadDto {
   @IsNotEmpty()
   @IsString()
@@ -9,4 +8,11 @@ export class AuthPayloadDto {
   @IsNotEmpty()
   @IsString()
   password!: string
+}
+
+export class AuthData {
+  user!: {
+    id: string
+    username: string
+  }
 }
