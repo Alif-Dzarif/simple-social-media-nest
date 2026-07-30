@@ -1,34 +1,31 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Req, Query } from '@nestjs/common';
 import { FollowsService } from './follows.service';
 import { CreateFollowDto } from './dto/create-follow.dto';
 import { UpdateFollowDto } from './dto/update-follow.dto';
+import { AuthData } from '../auth/dto/auth.dto';
+import { FilterFollowsQueryDto } from './dto/filter-follows-query';
 
 @Controller('follows')
 export class FollowsController {
-  constructor(private readonly followsService: FollowsService) {}
+  constructor(private readonly followsService: FollowsService) { }
 
   @Post()
-  create(@Body() createFollowDto: CreateFollowDto) {
-    return this.followsService.create(createFollowDto);
+  create(@Req() req: AuthData, @Body() createFollowDto: CreateFollowDto) {
+    return this.followsService.create(req.user.id, createFollowDto);
   }
 
   @Get()
-  findAll() {
-    return this.followsService.findAll();
+  findAll(@Query() query: FilterFollowsQueryDto) {
+    return this.followsService.findAll(query);
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.followsService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateFollowDto: UpdateFollowDto) {
-    return this.followsService.update(+id, updateFollowDto);
+    return this.followsService.findOne(id);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.followsService.remove(+id);
+  remove(@Req() req: AuthData, @Param('id') id: string) {
+    return this.followsService.remove(req.user.id, id);
   }
 }

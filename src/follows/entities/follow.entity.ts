@@ -17,10 +17,10 @@ export class Follow {
   created_at!: Date;
 
   @ManyToOne(() => User, (user) => user.following, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'follower_id' })
-  follower!: User;
+  @JoinColumn({ name: 'user_id' })
+  following!: User;
 
   @ManyToOne(() => User, (user) => user.followers, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'user_id' })
-  user!: User;
+  @JoinColumn({ name: 'followee_id' })
+  followers!: User;
 }
