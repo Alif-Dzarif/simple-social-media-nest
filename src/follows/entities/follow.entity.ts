@@ -7,10 +7,11 @@ export class Follow {
   id!: string;
 
   @Column({ type: 'uuid' })
-  follower_id!: string;
+  user_id!: string;
 
   @Column({ type: 'uuid' })
-  user_id!: string;
+  followee_id!: string;
+
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at!: Date;

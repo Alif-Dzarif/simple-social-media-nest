@@ -38,6 +38,6 @@ export class User {
   @OneToMany(() => Follow, (follow) => follow.user_id)
   following!: Follow[];
 
-  @OneToMany(() => Follow, (follow) => follow.follower_id)
+  @OneToMany(() => Follow, (follow) => follow.followee_id)
   followers!: Follow[];
 }

@@ -1,1 +1,3 @@
-export class CreateFollowDto {}
+export class CreateFollowDto {
+  follower_id!: string
+}

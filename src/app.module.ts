@@ -31,8 +31,8 @@ import { MinioModule } from './minio/minio.module';
         username: ConfigService.get<string>('DB_USERNAME'),
         password: ConfigService.get<string>('DB_PASSWORD'),
         database: ConfigService.get<string>('DB_NAME'),
-        entities: [join(process.cwd(), 'dist/**/*.entity{.ts,.js}')],
-        synchronize: true,
+        entities: [join(__dirname, '**', '*.entity.{ts,js}')],
+        synchronize: false,
       })
     }),
     UsersModule,
